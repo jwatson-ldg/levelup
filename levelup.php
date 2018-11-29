@@ -123,6 +123,7 @@ $trainingSessions = [
     ]
 ];
 
+// Days unavailable to train
 $daysUnavailable = [
     1 => [
         'date' => '10-11-18',
@@ -131,8 +132,13 @@ $daysUnavailable = [
     ]
 ];
 
+// Number of days between rest days (IE 6 would mean 1 rest day per week)
 $approxDaysBetweenRestDays = 6;
+
+// Which day do you generally schedule your rest day (if one rest day per week)
 $preferredRestDay = 'friday';
+
+// Do you have access to parkrun?
 $accessToParkrun = true;
 
 /***************

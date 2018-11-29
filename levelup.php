@@ -123,6 +123,18 @@ $trainingSessions = [
     ]
 ];
 
+$daysUnavailable = [
+    1 => [
+        'date' => '10-11-18',
+        'am' => true,
+        'pm' => true
+    ]
+];
+
+$approxDaysBetweenRestDays = 6;
+$preferredRestDay = 'friday';
+$accessToParkrun = true;
+
 /***************
  * END: Config *
  ***************/

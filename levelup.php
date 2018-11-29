@@ -158,3 +158,7 @@ $dateMsg = "\tTraining for:\t$startDateVerbose \n\tTo:\t\t$endDateVerbose\n\n";
 
 echo $introMsg;
 echo $dateMsg;
+
+// TODO: Build Calendar
+// Step 1: Fill in the races
+// Step 2: Fill in target mileage for each week

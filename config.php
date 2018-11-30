@@ -1,37 +1,46 @@
 <?php
 
-/*****************
- * START: Config *
- *****************/
+/**********
+ * Config *
+ **********/
 
 // Enter start date in format DD-MM-YY
 $startDate = '04-11-2018';
 
+// Length (in days) of current training block
+$numDays = 28;
+
 // Previous average mileage for a non-racing training week
 $avgMileage = 60;
 
-// Races during this training block
-$races = [
+// Events during this training block
+$events = [
     1 => [
         'date' => '04-11-2018',
+        'time' => 'am',
+        'name' => 'Leeds Abbey Dash',
         'type' => 'road',
         'distance' => 10,
         'distance_unit' => 'kilometre',
-        'target_race' => true
+        'target_event' => true
     ],
     2 => [
         'date' => '25-11-2018',
+        'time' => 'am',
+        'name' => 'Wilmslow 10k',
         'type' => 'road',
         'distance' => 10,
         'distance_unit' => 'kilometre',
-        'target_race' => false
+        'target_event' => false
     ],
     3 => [
         'date' => '01-12-2018',
+        'time' => 'pm',
+        'name' => 'Podium 5k',
         'type' => 'road',
         'distance' => 5,
         'distance_unit' => 'kilometre',
-        'target_race' => false
+        'target_event' => false
     ]
 ];
 
@@ -141,6 +150,4 @@ $preferredRestDay = 'friday';
 // Do you have access to parkrun?
 $accessToParkrun = true;
 
-/***************
- * END: Config *
- ***************/
+// TODO: Add recent races...

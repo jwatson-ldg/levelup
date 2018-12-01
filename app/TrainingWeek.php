@@ -71,23 +71,25 @@ class TrainingWeek
 
     private function calculateCombinedEventIntensityForTheWeek()
     {
-        $eventPreviousWeek = $this->getPreviousWeeksEvent();
-        $eventsThisWeek = $this->getCurrentWeeksEvents();
-        $eventNextWeek = $this->getNextWeeksEvent();
+        // TODO: Create decision engine classes, split this down into it (currently WAY too much code for one method)
+
+        $previousWeeksEvent = $this->getPreviousWeeksEvent();
+        $currentWeeksEvents = $this->getCurrentWeeksEvents();
+        $nextWeeksEvent = $this->getNextWeeksEvent();
 
         // No races during current week, last day of previous week or first day of next week (typical training week)
-        if ($eventsThisWeek === false && $eventNextWeek === false && $eventPreviousWeek === false) {
+        if ($currentWeeksEvents === false && $nextWeeksEvent === false && $previousWeeksEvent === false) {
             return 0;
         }
 
+        $previousWeeksEventAsPercentageOfWeeklyMileage = $this->calculateEventAsPercentageOfWeeklyMileage($previousWeeksEvent);
+        
         // No races during current week or first day of next week, but raced last day of previous week:
-        if ($eventsThisWeek === false && $eventNextWeek === false && $eventPreviousWeek !== false) {
-            $eventPercentageOfWeeklyMileage = $this->calculateEventAsPercentageOfWeeklyMileage($eventPreviousWeek);
-
-            if ($eventPercentageOfWeeklyMileage > 15) {
+        if ($currentWeeksEvents === false && $nextWeeksEvent === false && $previousWeeksEvent !== false) {
+            if ($previousWeeksEventAsPercentageOfWeeklyMileage > 15) {
                 // Race distance was > 15% of weekly mileage
                 return 3;
-            } else if ($eventPercentageOfWeeklyMileage >= 10 && $eventPercentageOfWeeklyMileage <= 15) {
+            } else if ($previousWeeksEventAsPercentageOfWeeklyMileage >= 10 && $previousWeeksEventAsPercentageOfWeeklyMileage <= 15) {
                 // Race distance was 10-15% of weekly mileage
                 return 2;
             } else {
@@ -96,43 +98,126 @@ class TrainingWeek
             }
         }
 
+        $nextWeeksEventAsPercentageOfWeeklyMileage = $this->calculateEventAsPercentageOfWeeklyMileage($nextWeeksEvent);
+
         //	No races during current week or last day of previous week, but racing first day of next week:
-        if ($eventsThisWeek === false && $eventPreviousWeek === false && $eventNextWeek !== false) {
-            // Race distance is < 10% of weekly mileage but not a key race [1]
-            // Race distance is < 10% of weekly mileage and is a key race [2]
-            // Race distance  is 10-15% of weekly mileage but not a key race [2]
-            // Race distance  is 10-15% of weekly mileage and is a key race [3]
-            // Race distance  is > 15% of weekly mileage but not a key race [3]
-            // Race distance  is > 15% of weekly mileage and is a key race [4]
+        if ($currentWeeksEvents === false && $previousWeeksEvent === false && $nextWeeksEvent !== false) {
+            if ($nextWeeksEventAsPercentageOfWeeklyMileage > 15) {
+                if ($nextWeeksEvent['target_event']) {
+                    // Race distance is > 15% of weekly mileage and is a key race
+                    return 4;
+                } else {
+                    // Race distance is > 15% of weekly mileage but not a key race
+                    return 3;
+                }
+            } else if ($nextWeeksEventAsPercentageOfWeeklyMileage >= 10 && $nextWeeksEventAsPercentageOfWeeklyMileage <= 15) {
+                if ($nextWeeksEvent['target_event']) {
+                    // Race distance is 10-15% of weekly mileage and is a key race
+                    return 3;
+                } else {
+                    // Race distance is 10-15% of weekly mileage but not a key race
+                    return 2;
+                }
+            } else {
+                if ($nextWeeksEvent['target_event']) {
+                    // Race distance is < 10% of weekly mileage and is a key race
+                    return 2;
+                } else {
+                    // Race distance is < 10% of weekly mileage but not a key race
+                    return 1;
+                }
+            }
         }
 
         // No races during current week, but raced last day of previous week and racing first day of next week:
-        if ($eventsThisWeek === false && $eventPreviousWeek !== false && $eventNextWeek !== false) {
-            // Previous week's race distance was < 10% of weekly mileage and:
-                // next week's race distance is < 10% of weekly mileage but not a key race [2]
-                // next week's race distance is < 10% of weekly mileage and is a key race [3]
-                // next week's race distance  is 10-15% of weekly mileage but not a key race [3]
-                // next week's race distance  is 10-15% of weekly mileage and is a key race [4]
-                // next week's race distance  is > 15% of weekly mileage but not a key race [4]
-                // next week's race distance  is > 15% of weekly mileage and is a key race [5]
-            // Previous week's race distance was 10-15% of weekly mileage and:
-                // next week's race distance is < 10% of weekly mileage but not a key race [3]
-                // next week's race distance is < 10% of weekly mileage and is a key race [4]
-                // next week's race distance  is 10-15% of weekly mileage but not a key race [4]
-                // next week's race distance  is 10-15% of weekly mileage and is a key race [5]
-                // next week's race distance  is > 15% of weekly mileage but not a key race [5]
-                // next week's race distance  is > 15% of weekly mileage and is a key race [6]
-            // Previous week's race distance was > 15% of weekly mileage and:
-                // next week's race distance is < 10% of weekly mileage but not a key race [4]
-                // next week's race distance is < 10% of weekly mileage and is a key race [5]
-                // next week's race distance  is 10-15% of weekly mileage but not a key race [5]
-                // next week's race distance  is 10-15% of weekly mileage and is a key race [6]
-                // next week's race distance  is > 15% of weekly mileage but not a key race [6]
-                // next week's race distance  is > 15% of weekly mileage and is a key race [7]
+        if ($currentWeeksEvents === false && $previousWeeksEvent !== false && $nextWeeksEvent !== false) {
+            if ($previousWeeksEventAsPercentageOfWeeklyMileage > 15) {
+                // Previous week's race distance was > 15% of weekly mileage and:
+                if ($nextWeeksEventAsPercentageOfWeeklyMileage > 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is > 15% of weekly mileage and is a key race
+                        return 7;
+                    } else {
+                        // next week's race distance is > 15% of weekly mileage but not a key race
+                        return 6;
+                    }
+                } else if ($nextWeeksEventAsPercentageOfWeeklyMileage >= 10 && $nextWeeksEventAsPercentageOfWeeklyMileage <= 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is 10-15% of weekly mileage and is a key race
+                        return 6;
+                    } else {
+                        // next week's race distance is 10-15% of weekly mileage but not a key race
+                        return 5;
+                    }
+                } else {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is < 10% of weekly mileage and is a key race
+                        return 5;
+                    } else {
+                        // next week's race distance is < 10% of weekly mileage but not a key race
+                        return 4;
+                    }
+                }
+            } else if ($previousWeeksEventAsPercentageOfWeeklyMileage >= 10 && $previousWeeksEventAsPercentageOfWeeklyMileage <= 15) {
+                // Previous week's race distance was 10-15% of weekly mileage and:
+                if ($nextWeeksEventAsPercentageOfWeeklyMileage > 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is > 15% of weekly mileage and is a key race
+                        return 6;
+                    } else {
+                        // next week's race distance is > 15% of weekly mileage but not a key race
+                        return 5;
+                    }
+                } else if ($nextWeeksEventAsPercentageOfWeeklyMileage >= 10 && $nextWeeksEventAsPercentageOfWeeklyMileage <= 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is 10-15% of weekly mileage and is a key race
+                        return 5;
+                    } else {
+                        // next week's race distance is 10-15% of weekly mileage but not a key race
+                        return 4;
+                    }
+                } else {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is < 10% of weekly mileage and is a key race
+                        return 4;
+                    } else {
+                        // next week's race distance is < 10% of weekly mileage but not a key race
+                        return 3;
+                    }
+                }
+            } else {
+                // Previous week's race distance was < 10% of weekly mileage and:
+                if ($nextWeeksEventAsPercentageOfWeeklyMileage > 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is > 15% of weekly mileage and is a key race
+                        return 5;
+                    } else {
+                        // next week's race distance is > 15% of weekly mileage but not a key race
+                        return 4;
+
+                    }
+                } else if ($nextWeeksEventAsPercentageOfWeeklyMileage >= 10 && $nextWeeksEventAsPercentageOfWeeklyMileage <= 15) {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is 10-15% of weekly mileage and is a key race
+                        return 4;
+                    } else {
+                        // next week's race distance is 10-15% of weekly mileage but not a key race
+                        return 3;
+                    }
+                } else {
+                    if ($nextWeeksEvent['target_event']) {
+                        // next week's race distance is < 10% of weekly mileage and is a key race
+                        return 3;
+                    } else {
+                        // next week's race distance is < 10% of weekly mileage but not a key race
+                        return 2;
+                    }
+                }
+            }
         }
 
         // Racing once or more during current week, but not on last day of previous week or first day of next week:
-        if ($eventsThisWeek !== false && $eventPreviousWeek === false && $eventNextWeek === false) {
+        if ($currentWeeksEvents !== false && $previousWeeksEvent === false && $nextWeeksEvent === false) {
             // Total distance for all races during the week is < 10%  of weekly mileage. No key races [2]
             // Total distance for all races during the week is < 10% of weekly mileage. Contains a key race [3]
             // Total distance for all races during the week is 10-15%%  of weekly mileage. No key races [3]
@@ -143,7 +228,7 @@ class TrainingWeek
 
 
         // Racing once or more during current week and on last day of previous week, but not on first day of next week:
-        if ($eventsThisWeek !== false && $eventPreviousWeek !== false && $eventNextWeek === false) {
+        if ($currentWeeksEvents !== false && $previousWeeksEvent !== false && $nextWeeksEvent === false) {
             // Previous week's race distance was < 10% of weekly mileage and
                 // total distance for all races during the week is < 10%  of weekly mileage. No key races [3]
                 // total distance for all races during the week is < 10% of weekly mileage. Contains a key race [4]
@@ -168,7 +253,7 @@ class TrainingWeek
         }
 
         // Racing once or more during current week and on first day of next week, but not on last day of previous week:
-        if ($eventsThisWeek !== false && $eventNextWeek !== false && $eventPreviousWeek === false) {
+        if ($currentWeeksEvents !== false && $nextWeeksEvent !== false && $previousWeeksEvent === false) {
             // Next week's race distance is < 10% of weekly mileage but not a key race and
                 // total distance for all races during the week is < 10%  of weekly mileage. No key races [4]
                 // total distance for all races during the week is < 10% of weekly mileage. Contains a key race [5]
@@ -214,7 +299,7 @@ class TrainingWeek
         }
 
         // The Calum James scenario. Racing once or more during current week and on first day of next week and on last day of previous week:
-        if ($eventsThisWeek !== false && $eventNextWeek !== false && $eventPreviousWeek !== false) {
+        if ($currentWeeksEvents !== false && $nextWeeksEvent !== false && $previousWeeksEvent !== false) {
             // Previous week's race distance was < 10% of weekly mileage and:
                 // next week's race distance is < 10% of weekly mileage but not a key race and:
                     // total distance for all races during the week is < 10%  of weekly mileage. No key races [5]

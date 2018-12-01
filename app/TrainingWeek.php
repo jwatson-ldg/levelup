@@ -57,16 +57,20 @@ class TrainingWeek
         return false;
     }
 
+    /**
+     * @param $event
+     * @return int
+     */
     private function calculateEventAsPercentageOfWeeklyMileage($event)
     {
         // Currently, average distance is stored in miles. Going forward, this could change so keep that in mind!
-        if ($event['distanceUnit'] === 'kilometre') {
+        if ($event['distance_unit'] === 'kilometre') {
             $eventDistance = $event['distance'] / 1.609;
         } else {
             $eventDistance = $event['distance'];
         }
 
-        return number_format(($eventDistance / $this->avgWeeklyMileage) * 100, 0);
+        return intval(($eventDistance / $this->avgWeeklyMileage) * 100);
     }
 
     private function calculateCombinedEventIntensityForTheWeek()
@@ -216,16 +220,44 @@ class TrainingWeek
             }
         }
 
-        // Racing once or more during current week, but not on last day of previous week or first day of next week:
-        if ($currentWeeksEvents !== false && $previousWeeksEvent === false && $nextWeeksEvent === false) {
-            // Total distance for all races during the week is < 10%  of weekly mileage. No key races [2]
-            // Total distance for all races during the week is < 10% of weekly mileage. Contains a key race [3]
-            // Total distance for all races during the week is 10-15%%  of weekly mileage. No key races [3]
-            // Total distance for all races during the week is 10-15%%  of weekly mileage. Contains a key race [4]
-            // Total distance for all races during the week is > 15%%  of weekly mileage. No key races [4]
-            // Total distance for all races during the week is > 15%%  of weekly mileage. Contains a key race [5]
+        $currentWeeksEventsAsPercentageOfWeeklyMileage = 0;
+        $keyEventThisWeek = false;
+
+        foreach ($currentWeeksEvents as $currentWeeksEvent) {
+            $currentWeeksEventsAsPercentageOfWeeklyMileage += $this->calculateEventAsPercentageOfWeeklyMileage($currentWeeksEvent);
+            if ($currentWeeksEvent['target_event']) {
+                $keyEventThisWeek = true;
+            }
         }
 
+        // Racing once or more during current week, but not on last day of previous week or first day of next week:
+        if ($currentWeeksEvents !== false && $previousWeeksEvent === false && $nextWeeksEvent === false) {
+            if ($currentWeeksEventsAsPercentageOfWeeklyMileage > 15) {
+                if ($keyEventThisWeek) {
+                    // Total distance for all races during the week is > 15%% of weekly mileage. Contains a key race
+                    return 5;
+                } else {
+                    // Total distance for all races during the week is > 15%% of weekly mileage. No key races
+                    return 4;
+                }
+            } else if ($currentWeeksEventsAsPercentageOfWeeklyMileage >= 10 && $currentWeeksEventsAsPercentageOfWeeklyMileage <= 15) {
+                if ($keyEventThisWeek) {
+                    // Total distance for all races during the week is 10-15%% of weekly mileage. Contains a key race
+                    return 4;
+                } else {
+                    // Total distance for all races during the week is 10-15%% of weekly mileage. No key races
+                    return 3;
+                }
+            } else {
+                if ($keyEventThisWeek) {
+                    // Total distance for all races during the week is < 10% of weekly mileage. Contains a key race
+                    return 3;
+                } else {
+                    // Total distance for all races during the week is < 10% of weekly mileage. No key races
+                    return 2;
+                }
+            }
+        }
 
         // Racing once or more during current week and on last day of previous week, but not on first day of next week:
         if ($currentWeeksEvents !== false && $previousWeeksEvent !== false && $nextWeeksEvent === false) {

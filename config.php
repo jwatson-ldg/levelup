@@ -16,7 +16,7 @@ $avgMileage = 60;
 // Events during this training block
 $events = [
     1 => [
-        'date' => '03-11-2018',
+        'date' => '04-11-2018',
         'time' => 'am',
         'name' => 'Leeds Abbey Dash',
         'type' => 'road',
@@ -25,7 +25,7 @@ $events = [
         'target_event' => true
     ],
     2 => [
-        'date' => '25-11-2018',
+        'date' => '10-11-2018',
         'time' => 'am',
         'name' => 'Wilmslow 10k',
         'type' => 'road',
